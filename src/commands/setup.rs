@@ -1,18 +1,26 @@
+use crate::utils::caddy::install_caddy;
 // src/commands/setup.rs
 use crate::utils::config::Config;
-use crate::utils::ssh::run_command;
 use crate::utils::file::write_file;
+use crate::utils::ssh::{run_command, SshRunner};
 use ssh2::Session;
 use std::error::Error;
 
-pub fn setup_server(session: &Session, config: &Config) -> Result<(), Box<dyn Error>> {
+pub fn setup_server<T: SshRunner>(
+    ssh_runner: &T,
+    session: &Session,
+    config: &Config,
+) -> Result<(), Box<dyn Error>> {
     println!("Setting up server environment...");
 
     // Update package lists
-    run_command(session, "sudo apt update")?;
+    ssh_runner.run_command(session, "sudo apt update")?;
 
     // Install common dependencies
-    run_command(session, "sudo apt install -y software-properties-common curl zip unzip")?;
+    ssh_runner.run_command(
+        session,
+        "sudo apt install -y software-properties-common curl zip unzip",
+    )?;
 
     // Install PHP and required extensions
     run_command(session, "sudo add-apt-repository ppa:ondrej/php -y")?;
@@ -24,17 +32,25 @@ pub fn setup_server(session: &Session, config: &Config) -> Result<(), Box<dyn Er
 
     // Install PostgreSQL
     run_command(session, "sudo apt install -y postgresql postgresql-contrib")?;
-    
-    // Setup PostgreSQL for Laravel
-    run_command(session, &format!("sudo -u postgres psql -c \"CREATE USER {} WITH PASSWORD '{}';\"", config.db_user, config.db_password))?;
-    run_command(session, &format!("sudo -u postgres psql -c \"CREATE DATABASE {} OWNER {}; \"", config.db_name, config.db_user))?;
 
-    // Install Caddy
-    run_command(session, "sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https")?;
-    run_command(session, "curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg")?;
-    run_command(session, "curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list")?;
-    run_command(session, "sudo apt update")?;
-    run_command(session, "sudo apt install -y caddy")?;
+    // Setup PostgreSQL for Laravel
+    run_command(
+        session,
+        &format!(
+            "sudo -u postgres psql -c \"CREATE USER {} WITH PASSWORD '{}';\"",
+            config.db_user, config.db_password
+        ),
+    )?;
+    run_command(
+        session,
+        &format!(
+            "sudo -u postgres psql -c \"CREATE DATABASE {} OWNER {}; \"",
+            config.db_name, config.db_user
+        ),
+    )?;
+    
+    install_caddy(ssh_runner, session).expect("Unable to install Caddy");
+    println!("Installed Caddy!");
 
     // Setup Caddy configuration
     let caddy_config = r#"

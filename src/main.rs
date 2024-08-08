@@ -5,6 +5,7 @@ mod utils;
 use clap::{Parser, Subcommand};
 use std::error::Error;
 use std::path::PathBuf;
+use utils::ssh::DirtSshRunner;
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -40,10 +41,8 @@ enum Commands {
         server: String,
     },
     // Test SSH connect
-    Connect {
-        #[clap(short, long, value_parser)]
-        server: String,
-    },
+    Connect {},
+    Init {}
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -51,27 +50,35 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Read configuration
     let config = utils::config::read_config(cli.config)?;
+    let ssh_runner = DirtSshRunner::new();
 
     match &cli.command {
-        Commands::Deploy { repo, server, zero_downtime } => {
+        Commands::Deploy {
+            repo,
+            server,
+            zero_downtime,
+        } => {
             println!("Deploying application...");
-            let session = utils::ssh::connect_ssh(server, &config)?;
+            let session = utils::ssh::connect_ssh(&config)?;
             commands::deploy::deploy_app(&session, &config, repo, *zero_downtime)?;
         }
         Commands::Setup { server } => {
             println!("Setting up server environment...");
-            let session = utils::ssh::connect_ssh(server, &config)?;
-            commands::setup::setup_server(&session, &config)?;
+            let session = utils::ssh::connect_ssh(&config)?;
+            commands::setup::setup_server(&ssh_runner, &session, &config)?;
         }
         Commands::Rollback { server } => {
             println!("Rolling back to previous deployment...");
-            let session = utils::ssh::connect_ssh(server, &config)?;
+            let session = utils::ssh::connect_ssh(&config)?;
             commands::rollback::rollback(&session, &config)?;
         }
-        Commands::Connect { server } => {
+        Commands::Connect {} => {
             println!("Testing SSH connection...");
-            let session = utils::ssh::connect_ssh(server, &config)?;
-            commands::connect::test_connection(&session)?;
+            let session = utils::ssh::connect_ssh(&config)?;
+            commands::connect::test_connection(&ssh_runner, &session)?;
+        }
+        Commands::Init {  } => {
+            commands::init::init()?;
         }
     }
 

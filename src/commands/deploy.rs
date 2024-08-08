@@ -1,4 +1,3 @@
-// src/commands/deploy.rs
 use crate::utils::config::Config;
 use crate::utils::ssh::run_command;
 use crate::utils::file::write_file;
@@ -10,8 +9,8 @@ pub fn deploy_app(session: &Session, config: &Config, repo: &str, zero_downtime:
     println!("Starting deployment process...");
 
     let timestamp = Local::now().format("%Y%m%d%H%M%S").to_string();
-    let release_path = format!("/var/www/laravel/releases/{}", timestamp);
-    let current_path = "/var/www/laravel/current";
+    let release_path = format!("/var/www/{}/releases/{}", config.name, timestamp);
+    let current_path = format!("/var/www/{}/current", config.name);
 
     // Create new release directory
     run_command(session, &format!("mkdir -p {}", release_path))?;

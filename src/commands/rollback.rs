@@ -1,4 +1,3 @@
-// src/commands/rollback.rs
 use crate::utils::config::Config;
 use crate::utils::ssh::run_command;
 use crate::utils::ssh::run_command_with_output;

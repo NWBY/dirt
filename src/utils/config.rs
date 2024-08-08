@@ -1,17 +1,19 @@
-// src/config.rs
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Config {
+    pub name: String,
+    pub ip_address: String,
     pub db_user: String,
     pub db_password: String,
     pub db_name: String,
     pub ssh_user: String,
     pub ssh_key_path: PathBuf,
+    pub commands: Vec<String>,
 }
 
 pub fn read_config(config_path: Option<PathBuf>) -> Result<Config, Box<dyn Error>> {
@@ -24,7 +26,7 @@ pub fn read_config(config_path: Option<PathBuf>) -> Result<Config, Box<dyn Error
     let mut file = File::open(&config_path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-    
+
     let config: Config = match config_path.extension().and_then(|s| s.to_str()) {
         Some("toml") => toml::from_str(&contents)?,
         Some("yaml") | Some("yml") => serde_yaml::from_str(&contents)?,
@@ -33,7 +35,6 @@ pub fn read_config(config_path: Option<PathBuf>) -> Result<Config, Box<dyn Error
     };
     Ok(config)
 }
-
 
 fn find_config_file() -> Result<PathBuf, Box<dyn Error>> {
     let base_name = "dirt";
