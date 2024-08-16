@@ -7,9 +7,7 @@ pub fn test_connection<T: SshRunner>(
     ssh_runner: &T,
     session: &Session,
 ) -> Result<(), Box<dyn Error>> {
-    println!("Connected successfully. Testing command execution...");
-
-    // Run a simple command to test
+    println!("Testing connection to server");
     let output =
         ssh_runner.run_command_with_output(session, "echo 'SSH connection test successful'")?;
 

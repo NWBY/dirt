@@ -73,7 +73,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             commands::rollback::rollback(&session, &config)?;
         }
         Commands::Connect {} => {
-            println!("Testing SSH connection...");
             let session = utils::ssh::connect_ssh(&config)?;
             commands::connect::test_connection(&ssh_runner, &session)?;
         }

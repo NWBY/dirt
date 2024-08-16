@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 pub struct Config {
     pub name: String,
     pub ip_address: String,
+    pub php_version: String,
     pub db_user: String,
     pub db_password: String,
     pub db_name: String,

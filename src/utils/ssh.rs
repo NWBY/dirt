@@ -40,7 +40,6 @@ impl SshRunner for DirtSshRunner {
         session: &Session,
         command: &str,
     ) -> Result<String, Box<dyn Error>> {
-        println!("Running command: {}", command);
         let mut channel = session.channel_session()?;
         channel.exec(command)?;
         let mut output = String::new();

@@ -12,6 +12,8 @@ pub fn setup_server<T: SshRunner>(
     config: &Config,
 ) -> Result<(), Box<dyn Error>> {
     println!("Setting up server environment...");
+    
+    todo!("check if php version is supported before proceeding");
 
     // Update package lists
     ssh_runner.run_command(session, "sudo apt update")?;
@@ -21,11 +23,14 @@ pub fn setup_server<T: SshRunner>(
         session,
         "sudo apt install -y software-properties-common curl zip unzip",
     )?;
+    
+    let php_version = format!("php{}", config.php_version);
+    let php_install_script = format!("sudo apt install -y {php_version} {php_version}-fpm {php_version}-cli {php_version}-mbstring {php_version}-xml {php_version}-zip {php_version}-pgsql {php_version}-curl");
 
     // Install PHP and required extensions
     run_command(session, "sudo add-apt-repository ppa:ondrej/php -y")?;
     run_command(session, "sudo apt update")?;
-    run_command(session, "sudo apt install -y php8.1 php8.1-fpm php8.1-cli php8.1-mbstring php8.1-xml php8.1-zip php8.1-pgsql php8.1-curl")?;
+    run_command(session, &php_install_script)?;
 
     // Install Composer
     run_command(session, "curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer")?;
